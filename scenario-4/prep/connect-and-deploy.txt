@@ -1,0 +1,34 @@
+Scenario 4 - Prep: management-group-scope deployment command
+==============================================================
+
+The reader/, contrib/, and owner/ folders here each deploy an Azure RBAC
+role assignment at MANAGEMENT GROUP scope - not resource group or
+subscription scope, like the rest of this repo - so they need a
+different connect + deploy command.
+
+1. Connect to Azure:
+
+    Connect-AzAccount
+
+2. Deploy (run from inside the reader/, contrib/, or owner/ folder):
+
+    New-AzManagementGroupDeployment `
+      -ManagementGroupId '<your-management-group-id>' `
+      -Location 'uksouth' `
+      -TemplateFile main.bicep `
+      -TemplateParameterFile main.bicepparam
+
+Notes:
+- -ManagementGroupId is the management group's *name* (its ID), not its
+  display name - find it with Get-AzManagementGroup.
+- -Location is required by the deployment engine to store deployment
+  metadata, even though no regional resources are created by any of
+  these templates.
+- You'll need enough Azure RBAC permission at that management group
+  (at least "User Access Administrator", or "Owner") to create role
+  assignments there - your everyday sign-in almost certainly won't have
+  this by default, which is rather the point of the exercise.
+- Remember to remove the role assignment afterwards if this was just for
+  the lab:
+
+    Remove-AzRoleAssignment -ObjectId <groupObjectId> -RoleDefinitionName '<Reader|Contributor|Owner>' -Scope '/providers/Microsoft.Management/managementGroups/<your-management-group-id>'
