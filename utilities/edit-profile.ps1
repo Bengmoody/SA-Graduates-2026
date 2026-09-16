@@ -42,39 +42,6 @@ function Convert-SecureString {
 }
 
 function Deploy-Bicep {
-param(
-    [Parameter()]
-    [string]$TemplateParameterFile = "./main.bicepparam",
-    [Parameter()]
-    [string]$TemplateFile = "./main.bicep",
-    [Parameter()]
-    [string]$EnvFile = "./.env",
-    [Parameter()]
-    [string]$Location
-)
-
-    $targets = @(
-        $TemplateParameterFile
-        $TemplateFile
-        $EnvFile
-        $Location
-    )
-
-    $results = foreach ($target in $targets) {
-        if (-not (Test-Path -Path $target)) {
-            Write-Host "Path $target not found, ending script"
-            $false
-        }
-    
-    }
-    if (($results |? {$_ -eq $true} | Measure-Object).Count -lt $targets.Count) {
-        Write-Host "Issue found, exiting"
-        throw
-    } else 
-
-}
-
-function Deploy-Bicep {
     param(
         [Parameter()]
         [string]$TemplateParameterFile = "./main.bicepparam",
@@ -113,10 +80,8 @@ function Deploy-Bicep {
     $WorkloadCode = Read-Host "Please confirm your desired workload code name, e.g. bentest, jh26 or pgtest etc"
     Set-Item -Path "Env:WORKLOAD_CODE" -Value $WorkloadCode.Trim('"')
 
-    New-AzSubscriptionDeployment `
-        -TemplateFile $TemplateFile `
-        -TemplateParameterFile $TemplateParameterFile `
-        -Location $Location
+    az deployment sub create --location $Location --template-file $TemplateFile --parameters $TemplateParameterFile --name "$($Env:Username)-$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
+
 }
 
 Set-Alias -Name git -Value "C:\Program Files\Git\cmd\git.exe" 
@@ -130,6 +95,7 @@ $targets = @(
     "function Convert-SecureString"
 )
 
+$Path = $PROFILE
 # check whether these lines possibly already exist or no
 $results = foreach ($target in $targets) {
     $hits = (Get-Content $Path | findstr /i /c:$target)
